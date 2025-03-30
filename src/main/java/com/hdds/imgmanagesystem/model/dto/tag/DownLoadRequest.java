@@ -5,7 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 下载请求
+ *  通用下载请求
  */
 @Data
 public class DownLoadRequest implements Serializable {

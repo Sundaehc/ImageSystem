@@ -68,6 +68,12 @@ public class MinIOController {
         return imagesService.downloadImage(fileName);
     }
 
+    /**
+     * 批量下载
+     * @param downLoadRequest
+     * @param response
+     * @throws Exception
+     */
     @PostMapping("/batch/download")
     public void batchDownload(@RequestBody DownLoadRequest downLoadRequest, HttpServletResponse response) throws Exception {
         String productId = downLoadRequest.getProductId();

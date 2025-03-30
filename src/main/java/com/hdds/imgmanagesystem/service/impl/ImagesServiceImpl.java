@@ -173,6 +173,13 @@ public class ImagesServiceImpl extends ServiceImpl<ImagesMapper, Images>
         return responseEntity;
     }
 
+    /**
+     * 批量下载
+     * @param tagId
+     * @param productId
+     * @param response
+     * @throws Exception
+     */
     @Override
     public void batchDownload(Integer tagId, String productId, HttpServletResponse response) throws Exception {
         if (tagId == null || tagId <= 0) {
@@ -242,6 +249,12 @@ public class ImagesServiceImpl extends ServiceImpl<ImagesMapper, Images>
         return null;
     }
 
+    /**
+     * 获取Images
+     * @param tagId
+     * @param productId
+     * @return
+     */
     private List<Images> getImages(Integer tagId, String productId) {
         QueryWrapper<Images> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("tagId", tagId)
