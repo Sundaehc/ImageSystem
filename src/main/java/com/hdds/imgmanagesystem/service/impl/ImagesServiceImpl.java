@@ -102,8 +102,13 @@ public class ImagesServiceImpl extends ServiceImpl<ImagesMapper, Images>
                         .stream(file.getInputStream(), file.getSize(), -1)
                         .contentType(file.getContentType())
                         .build());
-
-           String originaName = file.getOriginalFilename();
+        // 如果之前已经存在修改之前的版本
+        List<Images> existImages = imagesMapper.findExistImages(tagId, productId);
+        for (Images images : existImages) {
+            images.setIsLatest(0);
+            imagesMapper.updateById(images);
+        }
+        String originaName = file.getOriginalFilename();
            String sortOrder = originaName.replace(".jpg", "");
             Images image = new Images();
             image.setFileName(objectName);

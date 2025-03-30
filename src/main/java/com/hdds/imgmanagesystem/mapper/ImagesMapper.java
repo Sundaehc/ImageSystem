@@ -13,6 +13,8 @@ import java.util.List;
 */
 public interface ImagesMapper extends BaseMapper<Images> {
 
+    List<Images> findExistImages(int tagId, String productId);
+
 }
 
 

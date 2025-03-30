@@ -27,26 +27,25 @@ public class MinIOController {
     private ImagesService imagesService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "/upload")
-    public BaseResponse<Images>uploadImage(
+    public BaseResponse<Images> uploadImage(
             @RequestPart("file") MultipartFile file,
             @RequestParam("tagId") int tagId,
             @RequestParam("productId") String productId) {
         try {
             return ResultUtils.success(imagesService.uploadImage(file, tagId, productId));
         } catch (Exception e) {
-           throw new BusinessException(ErrorCode.OPERATION_ERROR);
+            throw new BusinessException(ErrorCode.OPERATION_ERROR);
         }
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "/batch/upload")
-    public BaseResponse<List<Images>>uploadImages(
-            @RequestPart("file") MultipartFile[] files,
-            @RequestParam("tagId") int tagId,
-            @RequestParam("productId") String productId) {
+    public BaseResponse<List<Images>> uploadImages(@RequestPart("file") MultipartFile[] file,
+                                                   @RequestParam("tagId") int tagId,
+                                                   @RequestParam("productId") String productId) {
         List<Images> results = new ArrayList<>();
-        for (MultipartFile file : files) {
+        for (MultipartFile f : file) {
             try {
-                Images image = imagesService.uploadImage(file, tagId, productId);
+                Images image = imagesService.uploadImage(f, tagId, productId);
                 results.add(image);
             } catch (Exception e) {
                 throw new BusinessException(ErrorCode.OPERATION_ERROR);
