@@ -79,8 +79,8 @@ public class TagController {
         if (oldTags == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
-        if (oldTags.getParentId() != null && oldTags.getParentId() != 0) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR,"请先删除父级标签");
+        if (oldTags.getParentId() != null && oldTags.getParentId() == 0) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR,"请先删除子标签");
         }
         boolean result = tagService.removeById(id);
         return ResultUtils.success(result);
