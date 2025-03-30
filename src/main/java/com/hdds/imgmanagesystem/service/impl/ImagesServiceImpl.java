@@ -84,7 +84,7 @@ public class ImagesServiceImpl extends ServiceImpl<ImagesMapper, Images>
      * @return
      */
     @Override
-    public  Images uploadImage(MultipartFile file, int tagId, String productId) throws Exception {
+    public Images uploadImage(MultipartFile file, int tagId, String productId) throws Exception {
         if (tagId <= 0 || productId == null || productId.equals("")) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -102,22 +102,24 @@ public class ImagesServiceImpl extends ServiceImpl<ImagesMapper, Images>
                         .stream(file.getInputStream(), file.getSize(), -1)
                         .contentType(file.getContentType())
                         .build());
+        
         // 如果之前已经存在修改之前的版本
-        List<Images> existImages = imagesMapper.findExistImages(tagId, productId);
+        QueryWrapper<Images> queryWrapper = new QueryWrapper<Images>().eq("tagId", tagId).eq("productId", productId);
+        List<Images> existImages = imagesMapper.selectList(queryWrapper);
         for (Images images : existImages) {
             images.setIsLatest(0);
             imagesMapper.updateById(images);
         }
         String originaName = file.getOriginalFilename();
-           String sortOrder = originaName.replace(".jpg", "");
-            Images image = new Images();
-            image.setFileName(objectName);
-            image.setProductId(productId);
-            image.setTagId(tagId);
-            image.setMinioPath(getPolicyUrl(objectName, Method.GET));
-            image.setSortOrder(sortOrder);
-            imagesMapper.insert(image);
-            return image;
+        String sortOrder = originaName.replace(".jpg", "");
+        Images image = new Images();
+        image.setFileName(objectName);
+        image.setProductId(productId);
+        image.setTagId(tagId);
+        image.setMinioPath(getPolicyUrl(objectName, Method.GET));
+        image.setSortOrder(sortOrder);
+        imagesMapper.insert(image);
+        return image;
     }
 
     @Override
@@ -172,37 +174,37 @@ public class ImagesServiceImpl extends ServiceImpl<ImagesMapper, Images>
     }
 
     @Override
-    public void batchDownload(int tagId, String productId, HttpServletResponse response) throws Exception {
-        if (tagId <= 0 || productId == null || productId.equals("")) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+    public void batchDownload(Integer tagId, String productId, HttpServletResponse response) throws Exception {
+        if (tagId == null || tagId <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "无效的标签ID");
         }
-        Tags tags = tagsMapper.selectById(tagId);
-        if (tags == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        if (StringUtils.isBlank(productId)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "商品货号不能为空");
         }
+        // 验证标签是否存在
+        Tags tag = tagsMapper.selectById(tagId);
+        if (tag == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "标签不存在");
+        }
+        QueryWrapper<Images> queryWrapper = new QueryWrapper<Images>().eq("productId", productId);
+        List<Images> exist = imagesMapper.selectList(queryWrapper);
+        if (exist == null || exist.size() == 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"商品货号不存在");
+        }
+        response.setContentType("application/zip");
+        response.setHeader("Content-Disposition",
+                "attachment; filename=\"images_" + System.currentTimeMillis() + ".zip\"");
+
+        // 创建ZIP输出流
         try (ZipOutputStream zipOut = new ZipOutputStream(response.getOutputStream())) {
-            QueryWrapper<Images> queryWrapper = new QueryWrapper<Images>().eq("tagId", tagId).eq("productId", productId);
-            List<Images> images = imagesMapper.selectList(queryWrapper);
+            // 查询图片列表
+            List<Images> images = getImages(tagId, productId);
+
+            // 遍历下载并压缩
             for (Images image : images) {
-                InputStream inputStream = minioClient.getObject(
-                        GetObjectArgs.builder()
-                                .bucket(minioConfig.getBucketName())
-                                .object(image.getFileName())
-                                .build());
-
-                ZipEntry zipEntry = new ZipEntry(image.getFileName());
-                zipOut.putNextEntry(zipEntry);
-
-                byte[] bytes = new byte[1024];
-                int length;
-                while ((length = inputStream.read(bytes)) >= 0) {
-                    zipOut.write(bytes, 0, length);
-                }
-                inputStream.close();
+                addToZip(zipOut, image);
             }
             zipOut.finish();
-        } catch (Exception e) {
-            throw new RuntimeException("压缩文件创建失败", e);
         }
     }
 
@@ -239,6 +241,41 @@ public class ImagesServiceImpl extends ServiceImpl<ImagesMapper, Images>
         }
         return null;
     }
+
+    private List<Images> getImages(Integer tagId, String productId) {
+        QueryWrapper<Images> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("tagId", tagId)
+                .eq("productId", productId);
+
+        List<Images> images = imagesMapper.selectList(queryWrapper);
+        if (images == null || images.isEmpty()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "未找到相关图片");
+        }
+        return images;
+    }
+
+    private void addToZip(ZipOutputStream zipOut, Images image) throws Exception {
+        try (InputStream inputStream = minioClient.getObject(
+                GetObjectArgs.builder()
+                        .bucket(minioConfig.getBucketName())
+                        .object(image.getFileName())
+                        .build())) {
+
+            ZipEntry zipEntry = new ZipEntry(image.getFileName());
+            zipOut.putNextEntry(zipEntry);
+
+            byte[] buffer = new byte[1024 * 1024]; // 1MB buffer
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                zipOut.write(buffer, 0, bytesRead);
+            }
+            zipOut.closeEntry();
+        } catch (Exception e) {
+            log.error("文件处理失败: {}" + image.getFileName(), e);
+            throw new RuntimeException("文件处理失败: " + image.getFileName());
+        }
+    }
+
 }
 
 

@@ -24,6 +24,6 @@ public interface ImagesService extends IService<Images> {
 
         ResponseEntity<byte[]> downloadImage(String fileName) throws Exception;
 
-        void batchDownload(int tagId, String productId, HttpServletResponse response) throws Exception;
+        void batchDownload(Integer tagId, String productId, HttpServletResponse response) throws Exception;
 
 }

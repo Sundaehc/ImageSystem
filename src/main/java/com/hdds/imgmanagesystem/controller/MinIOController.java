@@ -5,6 +5,7 @@ import com.hdds.imgmanagesystem.common.BaseResponse;
 import com.hdds.imgmanagesystem.common.ErrorCode;
 import com.hdds.imgmanagesystem.common.ResultUtils;
 import com.hdds.imgmanagesystem.exception.BusinessException;
+import com.hdds.imgmanagesystem.model.dto.tag.DownLoadRequest;
 import com.hdds.imgmanagesystem.model.entity.Images;
 import com.hdds.imgmanagesystem.service.ImagesService;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +55,7 @@ public class MinIOController {
         return ResultUtils.success(results);
     }
 
-    @PostMapping("/download")
+    @GetMapping("/download")
     public ResponseEntity<byte[]> downloadImage(String fileName) throws Exception {
         if (fileName == null || "".equals(fileName)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -68,10 +69,16 @@ public class MinIOController {
     }
 
     @PostMapping("/batch/download")
-    public void batchDownload(int tagId, String productId, HttpServletResponse response) throws Exception {
+    public void batchDownload(@RequestBody DownLoadRequest downLoadRequest, HttpServletResponse response) throws Exception {
+        String productId = downLoadRequest.getProductId();
+        int tagId = downLoadRequest.getTagId();
         if (productId == null || "".equals(productId) || tagId <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        imagesService.batchDownload(tagId, productId, response);
+        try {
+            imagesService.batchDownload(tagId, productId ,response);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, e.getMessage());
+        }
     }
 }

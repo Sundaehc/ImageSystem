@@ -20,8 +20,5 @@
         id,fileName,productId,tagId,minioPath,sortOrder,
         isLatest,createdAt,updateAt
     </sql>
-    <select id="findExistImages" resultType="com.hdds.imgmanagesystem.model.entity.Images">
-        select * from images where tagId = #{tagId} and productId = #{productId}
-    </select>
 
 </mapper>
