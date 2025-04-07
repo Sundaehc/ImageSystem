@@ -20,5 +20,8 @@
         id,fileName,productId,tagId,minioPath,sortOrder,
         isLatest,createdAt,updateAt
     </sql>
+    <select id="selectObjectNamesByTagAndProduct" resultType="java.lang.String">
+        select fileName from images where tagId = #{tagId} and productId = #{productId}
+    </select>
 
 </mapper>

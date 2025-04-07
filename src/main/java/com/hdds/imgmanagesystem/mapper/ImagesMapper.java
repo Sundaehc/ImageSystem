@@ -14,6 +14,7 @@ import java.util.List;
 public interface ImagesMapper extends BaseMapper<Images> {
 
 
+    List<String> selectObjectNamesByTagAndProduct(Integer tagId, String productId);
 }
 
 
