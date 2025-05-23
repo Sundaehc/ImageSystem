@@ -105,8 +105,8 @@ public class ImagesServiceImpl extends ServiceImpl<ImagesMapper, Images>
             images.setIsLatest(0);
             imagesMapper.updateById(images);
         }
-        String originaName = file.getOriginalFilename();
-        String sortOrder = removeImageExtension(originaName);
+        String originalName = file.getOriginalFilename();
+        String sortOrder = removeImageExtension(originalName);
         Images image = new Images();
         image.setFileName(objectName);
         image.setProductId(productId);
